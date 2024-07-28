@@ -23,6 +23,4 @@ fn main() {
         _ => println!("JSON value is neither an object nor array")
     }
     println!("{}", res);
-    ()
-
 }
