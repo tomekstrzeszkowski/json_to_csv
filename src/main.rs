@@ -1,58 +1,28 @@
-use serde_json::{Value};
-use clap::{Parser};
-#[derive(Parser)]
-struct Cli {
-    json: String,
-}
-pub fn json_to_csv(json: &String) -> String {
-    let v: Vec<Value> = serde_json::from_str(&json).unwrap();
-    let mut header: String = String::new();
-    let mut print_header = true;
-    let mut csv = String::new();
-    for item in &v {
-        let mut row = String::new();
-        for (key, value) in item.as_object().unwrap(){
-            if print_header {
-                header = header + key + ",";
-            }
-            row = row + &value.to_string() + ",";
-        }
-        if print_header {
-            header.pop();
-            csv = header.chars().collect::<String>();
-            csv += "\n";
-            print_header = false;
-        }
-        row.pop();
-        row += "\n";
-        csv = csv + &row;
-    }
-    csv
-}
+use clap::Parser;
+use serde_json::Value;
+mod cli;
+mod json_to_csv;
 
 fn main() {
-    let args = Cli::parse();
-    let v: Vec<Value> = serde_json::from_str(&args.json).unwrap();
-    let res = json_to_csv(&args.json);
-    println!("{}", res)
+    let args = cli::Cli::parse();
+    if args.debug {
+        println!("[DEBUGGER]");
+        for argument in std::env::args_os() {
+            println!("{argument:?}");
+        }
+    }
+    let v: Value = serde_json::from_str(&args.json).unwrap();
+    let mut res: String = String::from("");
+    match v {
+        Value::Object(_) => {
+            res = json_to_csv::item_to_csv(v);
+        },
+        Value::Array(_) => {
+            res = json_to_csv::items_to_csv(v);
+        },
+        _ => println!("JSON value is neither an object nor array")
+    }
+    println!("{}", res);
+    ()
 
-}
-//cargo run -- '[{"a": 4, "b": 8}, {"a":9, "b": 10}]'
-
-#[cfg(test)]
-mod tests {
-
-  use super::*;
-
-  #[test]
-  fn two_dimension() {
-    let parsed = json_to_csv(&String::from("[{\"a\": 4, \"b\": 8}, {\"a\":9, \"b\": 10}]"));
-    assert_eq!(format!("{}", parsed), "a,b\n4,8\n9,10\n");
-  }
-
-  #[test]
-  fn two_dimension_with_odds() {
-    let parsed = json_to_csv(&String::from("[{\"a\": 4, \"b\": 8}, {\"a\":9}]"));
-    assert_eq!(format!("{}", parsed), "a,b\n4,8\n9,\n");
-  }
 }
