@@ -1,6 +1,31 @@
 use std::collections::HashMap;
 use serde_json::Value;
 
+pub struct Builder {
+    json: String,
+}
+impl Builder {
+    #[must_use]
+    pub fn new(json: String) -> Self {
+        Self{json}
+    }
+
+    pub fn csv(self) -> String {
+        let v: Value = serde_json::from_str(&self.json).unwrap();
+        let res: String;
+        match v {
+            Value::Object(_) => {
+                res = item_to_csv(v);
+            },
+            Value::Array(_) => {
+                res = items_to_csv(v);
+            },
+            _ => res = String::from("JSON value is neither an object nor array")
+        }
+        res
+    }
+}
+
 fn collect_from_object(item: &Value) -> Vec<&String> {
     let mut headers: Vec<&String> = Vec::new();
     for (key, _) in item.as_object().unwrap() {

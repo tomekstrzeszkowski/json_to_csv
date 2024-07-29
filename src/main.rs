@@ -1,5 +1,5 @@
 use clap::Parser;
-use serde_json::Value;
+use repair_json;
 mod cli;
 mod json_to_csv;
 
@@ -11,16 +11,10 @@ fn main() {
             println!("{argument:?}");
         }
     }
-    let v: Value = serde_json::from_str(&args.json).unwrap();
-    let mut res: String = String::from("");
-    match v {
-        Value::Object(_) => {
-            res = json_to_csv::item_to_csv(v);
-        },
-        Value::Array(_) => {
-            res = json_to_csv::items_to_csv(v);
-        },
-        _ => println!("JSON value is neither an object nor array")
-    }
+    let mut json_builder = repair_json::Builder::new();
+	let _ = json_builder.update(&args.json);
+	let json = json_builder.completed_string().unwrap();
+    let csv_builder = json_to_csv::Builder::new(json);
+    let res = csv_builder.csv();
     println!("{}", res);
 }
