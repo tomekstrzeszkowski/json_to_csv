@@ -15,9 +15,11 @@ impl Builder {
         let res: String;
         match v {
             Value::Object(_) => {
-                res = item_to_csv(v);
+                let v = vec![v];
+                res = items_to_csv(v);
             },
             Value::Array(_) => {
+                let v: Vec<Value> = v.as_array().unwrap().clone();
                 res = items_to_csv(v);
             },
             _ => res = String::from("JSON value is neither an object nor array")
@@ -80,28 +82,18 @@ fn create_rows(v: &serde_json::Map<String, serde_json::Value>, header_items: &Ve
     row.join(",") + "\n"
 }
 
-pub fn items_to_csv(v: Value) -> String {
-    let mut csv = String::new();
+pub fn items_to_csv(v: Vec<Value>) -> String {
+    let mut csv: String;
     let mut header_items: Vec<&String> = Vec::new();
-    let v: Vec<Value> = v.as_array().unwrap().clone();
     for item in &v {
         let h = collect_from_object(item);
         extend_header(&mut header_items, h);
     }
-    csv += &create_header(&header_items);
+    csv = create_header(&header_items);
     for item in &v {
         csv += &create_rows(&item.as_object().unwrap(), &header_items);
     }
     csv
-}
-
-pub fn item_to_csv(v: Value) -> String {
-    let v = v.as_object().unwrap().clone();
-    let mut csv = String::new();
-    let mut header_items: Vec<&String> = Vec::new();
-    extend_header(&mut header_items, v.keys().collect());
-    csv += &create_header(&header_items);
-    csv + &create_rows(&v, &header_items)
 }
 
 
@@ -126,13 +118,13 @@ mod tests {
   #[test]
   fn simple_object() {
     let value = serde_json::from_str(&String::from("{\"a\": 4, \"b\": 8}")).unwrap();
-    let parsed = item_to_csv(value);
+    let parsed = items_to_csv(vec![value]);
     assert_eq!(format!("{}", parsed), "a,b\n4,8\n");
   }
   #[test]
   fn object_with_null() {
     let value = serde_json::from_str(&String::from("{\"a\": null, \"b\": 8}")).unwrap();
-    let parsed = item_to_csv(value);
+    let parsed = items_to_csv(vec![value]);
     assert_eq!(format!("{}", parsed), "a,b\nnull,8\n");
   }
 }
