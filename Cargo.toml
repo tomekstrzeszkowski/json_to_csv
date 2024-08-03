@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "Convert JSON to CSV"
-keywords = ["json_to_csv", "json2csv", "j2csv", "conversion_json_to_csv"]
+keywords = ["json_to_csv", "json2csv", "j2csv", "conversion_to_csv"]
 
 [dependencies]
 clap = { version = "^4.3", features = ["derive"] }
